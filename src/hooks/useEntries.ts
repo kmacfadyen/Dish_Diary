@@ -62,7 +62,6 @@ export function useEntries() {
       console.error('addEntries error:', error)
       return { error: error.message }
     }
-    await fetchEntries()
     return { error: null }
   }
 
@@ -87,6 +86,13 @@ export function useEntries() {
       .ilike('item_name', itemName)
       .order('visit_date', { ascending: false })
     return data ?? []
+  }
+
+  async function deleteEntry(entryId: string): Promise<void> {
+    const { error } = await supabase.from('diary_entries').delete().eq('id', entryId)
+    if (!error) {
+      setEntries(prev => prev.filter(e => e.id !== entryId))
+    }
   }
 
   async function getOrCreateRestaurant(name: string, address: string, cuisine: string, googlePlaceId?: string): Promise<Restaurant | null> {
@@ -152,5 +158,6 @@ export function useEntries() {
     getEntriesForDish,
     getOrCreateRestaurant,
     refresh: fetchEntries,
+    deleteEntry,
   }
 }

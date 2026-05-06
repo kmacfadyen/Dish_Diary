@@ -11,13 +11,13 @@ interface Props {
 }
 
 export function LogPage({ onLogAgain }: Props) {
-  const { entries, restaurants, loading } = useEntries()
+  const { entries, restaurants, loading, deleteEntry, getDishStats } = useEntries()
   const { profile } = useAuth()
   const [search, setSearch] = useState('')
   const [modalRId, setModalRId] = useState<string | null>(null)
   const [dishStats, setDishStats] = useState<DishStats[]>([])
   const [statsLoading, setStatsLoading] = useState(false)
-  const { getDishStats } = useEntries()
+
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase()
@@ -54,6 +54,15 @@ export function LogPage({ onLogAgain }: Props) {
       avgRat: avgRating(es.map(e => e.rating_overall)),
       entries: es.sort((a, b) => b.visit_date.localeCompare(a.visit_date)),
     })).sort((a, b) => b.avgRat - a.avgRat)
+  }
+
+  async function handleDeleteEntry(entryId: string) {
+    if (!confirm('Delete this log entry?')) return
+    await deleteEntry(entryId)
+    if (modalRId) {
+      const updated = await getDishStats(modalRId)
+      setDishStats(updated)
+    }
   }
 
   async function openRestaurantModal(rId: string) {
