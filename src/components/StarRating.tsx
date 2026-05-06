@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
 interface Props {
-  value: number        // 0 - 5 in 0.5 increments
+  value: number
   onChange?: (v: number) => void
   readonly?: boolean
   size?: number
@@ -9,7 +9,6 @@ interface Props {
 
 export function StarRating({ value, onChange, readonly = false, size = 22 }: Props) {
   const [hover, setHover] = useState<number | null>(null)
-
   const display = hover ?? value
 
   function getStarFill(star: number): 'full' | 'half' | 'empty' {
@@ -18,25 +17,60 @@ export function StarRating({ value, onChange, readonly = false, size = 22 }: Pro
     return 'empty'
   }
 
+  function getValueFromEvent(e: React.MouseEvent | React.TouchEvent, star: number): number {
+    let clientX: number
+    if ('touches' in e) {
+      clientX = e.touches[0]?.clientX ?? e.changedTouches[0]?.clientX ?? 0
+    } else {
+      clientX = e.clientX
+    }
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    const x = clientX - rect.left
+    return x < rect.width / 2 ? star - 0.5 : star
+  }
+
   function handleMouseMove(e: React.MouseEvent, star: number) {
     if (readonly) return
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const half = x < rect.width / 2
-    setHover(half ? star - 0.5 : star)
+    setHover(getValueFromEvent(e, star))
   }
 
   function handleClick(e: React.MouseEvent, star: number) {
     if (readonly || !onChange) return
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const half = x < rect.width / 2
-    onChange(half ? star - 0.5 : star)
+    onChange(getValueFromEvent(e, star))
+  }
+
+  function handleTouchEnd(e: React.TouchEvent, star: number) {
+    if (readonly || !onChange) return
+    e.preventDefault()
+    const val = getValueFromEvent(e, star)
+    setHover(val)
+    onChange(val)
+  }
+
+  function starStyle(fill: 'full' | 'half' | 'empty'): React.CSSProperties {
+    const base: React.CSSProperties = {
+      fontSize: size,
+      lineHeight: 1,
+      cursor: readonly ? 'default' : 'pointer',
+      userSelect: 'none',
+      display: 'inline-block',
+      WebkitTapHighlightColor: 'transparent',
+      touchAction: 'manipulation',
+    }
+    if (fill === 'full') return { ...base, color: '#9a6c00' }
+    if (fill === 'empty') return { ...base, color: '#ccc' }
+    return {
+      ...base,
+      background: 'linear-gradient(to right, #9a6c00 50%, #ccc 50%)',
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
+      backgroundClip: 'text',
+    }
   }
 
   return (
     <div
-      style={{ display: 'inline-flex', gap: 2 }}
+      style={{ display: 'inline-flex', gap: 3 }}
       onMouseLeave={() => !readonly && setHover(null)}
     >
       {[1, 2, 3, 4, 5].map(star => {
@@ -44,24 +78,10 @@ export function StarRating({ value, onChange, readonly = false, size = 22 }: Pro
         return (
           <span
             key={star}
+            style={starStyle(fill)}
             onMouseMove={e => handleMouseMove(e, star)}
             onClick={e => handleClick(e, star)}
-            style={{
-              fontSize: size,
-              lineHeight: 1,
-              cursor: readonly ? 'default' : 'pointer',
-              userSelect: 'none',
-              display: 'inline-block',
-              position: 'relative',
-              ...(fill === 'full' ? { color: '#9a6c00' } :
-                  fill === 'empty' ? { color: '#ccc' } : {}),
-              ...(fill === 'half' ? {
-                background: 'linear-gradient(to right, #9a6c00 50%, #ccc 50%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              } : {}),
-            }}
+            onTouchEnd={e => handleTouchEnd(e, star)}
           >
             ★
           </span>
@@ -71,7 +91,6 @@ export function StarRating({ value, onChange, readonly = false, size = 22 }: Pro
   )
 }
 
-// Read-only display version for showing ratings
 export function StarDisplay({ value, size = 13 }: { value: number; size?: number }) {
   return <StarRating value={value} readonly size={size} />
 }
