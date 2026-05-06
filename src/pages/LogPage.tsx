@@ -219,39 +219,70 @@ export function LogPage({ onLogAgain }: Props) {
                 <div className="stat-lbl">visits</div>
               </div>
             </div>
-            <div className="section-label">Dishes — averaged & combined</div>
-            {statsLoading ? (
-              <div style={{ textAlign: 'center', padding: 20, color: 'var(--fg3)' }}>Loading…</div>
-            ) : (
-              dishStats.map(stat => (
-                <div className="dish-history" key={stat.item_name}>
-                  <div className="dish-history-header">
-                    <div>
-                      <span className="dish-history-name">{stat.item_name}</span>
-                      {stat.visit_count > 1 && <span className="repeat-badge">↺ {stat.visit_count}x</span>}
-                    </div>
-                    <div className="star-disp"><StarDisplay value={stat.avg_rating} /></div>
-                  </div>
-                  {stat.visit_count > 1 && (
-                    <div style={{ fontSize: 11, color: 'var(--fg3)', marginBottom: 6, fontWeight: 600 }}>
-                      avg {stat.avg_rating} across {stat.visit_count} visits
-                    </div>
-                  )}
-                  {stat.all_notes && stat.all_notes.filter(Boolean).map((note, i) => (
-                    <div key={i} style={{ fontSize: 12, color: 'var(--fg2)', fontStyle: 'italic', marginTop: 4 }}>"{note}"</div>
-                  ))}
-                  {stat.avg_flavor && (
-                    <div style={{ marginTop: 6, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                      {[['Flavor', stat.avg_flavor], ['Temp', stat.avg_temperature], ['Texture', stat.avg_texture], ['Presentation', stat.avg_presentation], ['Value', stat.avg_value]].filter(([, v]) => v).map(([k, v]) => (
-                        <span key={k as string} style={{ fontSize: 11, background: 'var(--bg2)', color: 'var(--fg2)', padding: '1px 6px', borderRadius: 6, fontWeight: 600 }}>
-                          {k}: {(v as number).toFixed(1)}/5
-                        </span>
+            <div className="section-label">Dishes</div>
+            {(() => {
+              // Group modalEntries by dish name
+              const byDish = new Map<string, typeof modalEntries>()
+              modalEntries.forEach(e => {
+                const k = e.item_name.toLowerCase()
+                if (!byDish.has(k)) byDish.set(k, [])
+                byDish.get(k)!.push(e)
+              })
+              return Array.from(byDish.values())
+                .sort((a, b) => avgRating(b.map(e => e.rating_overall)) - avgRating(a.map(e => e.rating_overall)))
+                .map(dishEntries => {
+                  const name = dishEntries[0].item_name
+                  const ar = avgRating(dishEntries.map(e => e.rating_overall))
+                  return (
+                    <div className="dish-history" key={name}>
+                      <div className="dish-history-header">
+                        <div>
+                          <span className="dish-history-name">{name}</span>
+                          {dishEntries.length > 1 && <span className="repeat-badge">↺ {dishEntries.length}x</span>}
+                        </div>
+                        <div><StarDisplay value={ar} size={14} /></div>
+                      </div>
+                      {dishEntries.length > 1 && (
+                        <div style={{ fontSize: 11, color: 'var(--fg3)', marginBottom: 6, fontWeight: 600 }}>
+                          avg {ar.toFixed(1)} across {dishEntries.length} visits
+                        </div>
+                      )}
+                      {dishEntries.map(e => (
+                        <div key={e.id} style={{ padding: '8px 0', borderTop: '1px solid var(--border)', marginTop: 4 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ fontSize: 11, color: 'var(--fg3)', fontWeight: 600 }}>
+                              {format(new Date(e.visit_date), 'MMM d, yyyy')}
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              {e.rating_overall && <StarDisplay value={e.rating_overall} size={12} />}
+                              <button
+                                onClick={() => handleDeleteEntry(e.id)}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg3)', fontSize: 15, padding: 0, lineHeight: 1, opacity: 0.7 }}
+                                title="Delete this entry">
+                                🗑
+                              </button>
+                            </div>
+                          </div>
+                          {e.notes && (
+                            <div style={{ fontSize: 12, color: 'var(--fg2)', fontStyle: 'italic', marginTop: 3 }}>"{e.notes}"</div>
+                          )}
+                          {e.rating_flavor && (
+                            <div style={{ marginTop: 4, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                              {[['Flavor', e.rating_flavor], ['Temp', e.rating_temperature], ['Texture', e.rating_texture], ['Pres.', e.rating_presentation], ['Value', e.rating_value]]
+                                .filter(([, v]) => v)
+                                .map(([k, v]) => (
+                                  <span key={k as string} style={{ fontSize: 11, background: 'var(--bg2)', color: 'var(--fg2)', padding: '1px 6px', borderRadius: 6, fontWeight: 600 }}>
+                                    {k}: {v}/5
+                                  </span>
+                                ))}
+                            </div>
+                          )}
+                        </div>
                       ))}
                     </div>
-                  )}
-                </div>
-              ))
-            )}
+                  )
+                })
+            })()}
             <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
               <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => { setModalRId(null); onLogAgain(modalRestaurant) }}>
                 + Log a new visit
@@ -278,3 +309,4 @@ export function LogPage({ onLogAgain }: Props) {
     </div>
   )
 }
+
