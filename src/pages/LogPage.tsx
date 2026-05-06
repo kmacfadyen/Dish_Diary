@@ -247,6 +247,21 @@ export function LogPage({ onLogAgain }: Props) {
               <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => { setModalRId(null); onLogAgain(modalRestaurant) }}>
                 + Log a new visit
               </button>
+              <button className="btn btn-outline" onClick={async () => {
+                const { supabase } = await import('@/lib/supabase')
+                const { data } = await supabase.from('restaurants').select('share_token').eq('id', modalRId).single()
+                if (data?.share_token) {
+                  const url = `${window.location.origin}/share/${data.share_token}`
+                  if (navigator.share) {
+                    navigator.share({ title: modalRestaurant.name + ' on Dish Diary', url })
+                  } else {
+                    navigator.clipboard.writeText(url)
+                    alert('Share link copied to clipboard!')
+                  }
+                }
+              }}>
+                🔗 Share
+              </button>
             </div>
           </div>
         </div>

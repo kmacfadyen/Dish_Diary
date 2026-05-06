@@ -8,17 +8,22 @@ import { SessionPage } from '@/pages/SessionPage'
 import { PlacesPage } from '@/pages/PlacesPage'
 import { ProfilePage } from '@/pages/ProfilePage'
 import { Logo } from '@/components/Logo'
+import { SharePage } from '@/pages/SharePage'
 import { useFriends } from '@/hooks/useFriends'
 import type { Restaurant } from '@/types'
- 
+
 type Tab = 'log' | 'add' | 'wishlist' | 'session' | 'places' | 'profile'
- 
+
 export function App() {
   const { user, loading } = useAuth()
   const [tab, setTab] = useState<Tab>('log')
   const [prefillRestaurant, setPrefillRestaurant] = useState<Restaurant | null>(null)
   const { pendingReceived } = useFriends()
- 
+
+  // Handle share links — /share/TOKEN — no auth required
+  const shareMatch = window.location.pathname.match(/^\/share\/([a-f0-9]+)$/)
+  if (shareMatch) return <SharePage token={shareMatch[1]} />
+
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a3010' }}>
@@ -26,19 +31,19 @@ export function App() {
       </div>
     )
   }
- 
+
   if (!user) return <AuthPage />
- 
+
   function logAgain(restaurant: Restaurant) {
     setPrefillRestaurant(restaurant)
     setTab('add')
   }
- 
+
   function handleSaved() {
     setPrefillRestaurant(null)
     setTab('log')
   }
- 
+
   return (
     <div className="app-shell">
       <header className="header">
@@ -60,7 +65,7 @@ export function App() {
           )}
         </button>
       </header>
- 
+
       <nav className="nav">
         {([
           { id: 'log', label: '📖 Log' },
@@ -74,7 +79,7 @@ export function App() {
           </button>
         ))}
       </nav>
- 
+
       <main>
         {tab === 'log' && <LogPage onLogAgain={logAgain} />}
         {tab === 'add' && <AddMealPage prefillRestaurant={prefillRestaurant} onSaved={handleSaved} />}

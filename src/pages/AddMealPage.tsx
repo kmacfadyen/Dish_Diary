@@ -5,6 +5,7 @@ import { useFriends } from '@/hooks/useFriends'
 import { useSession } from '@/hooks/useSession'
 import { CUISINES, initials } from '@/lib/helpers'
 import { StarRating } from '@/components/StarRating'
+import { PhotoUpload } from '@/components/PhotoUpload'
 import { searchGooglePlaces } from '@/lib/places'
 import type { Restaurant, NewEntryDraft } from '@/types'
 
@@ -145,7 +146,7 @@ export function AddMealPage({ prefillRestaurant, onSaved }: Props) {
   }
 
   function goToStep3() {
-    const newDrafts: NewEntryDraft[] = selectedItems.map(item => ({
+    const newDrafts: any[] = selectedItems.map(item => ({
       item_name: item.name,
       item_category: '',
       who: [user?.id ?? ''],
@@ -157,6 +158,8 @@ export function AddMealPage({ prefillRestaurant, onSaved }: Props) {
       rating_value: 3,
       notes: '',
       mode: 'stars',
+      photo_url: null,
+      saved_id: null,
     }))
     setDrafts(newDrafts)
     setStep(3)
@@ -209,16 +212,29 @@ export function AddMealPage({ prefillRestaurant, onSaved }: Props) {
       })
     })
 
-    // Only save entries for current user (friends' entries require their own login)
+    // Only save entries for current user
     const myRows = rows.filter(r => r.user_id === user.id)
-    const { error } = await addEntries(restaurant.id, myRows)
-    if (error) { setSaveError(error); setSaving(false); return }
 
-    // Reset
-    setStep(1); setSearchQuery(''); setSearchResults([])
-    setSelectedRestaurant(null); setSelectedItems([])
-    setDrafts([]); setPreviousItems([]); setSaving(false)
-    onSaved()
+    // Insert and get back IDs so we can attach photos
+    const { supabase } = await import('@/lib/supabase')
+    const { data: savedEntries, error } = await supabase
+      .from('diary_entries')
+      .insert(myRows)
+      .select('id, item_name')
+
+    if (error) { setSaveError(error.message); setSaving(false); return }
+
+    // Map saved IDs back to drafts so photo upload can work
+    if (savedEntries) {
+      setDrafts(prev => prev.map(d => {
+        const match = savedEntries.find(e => e.item_name === d.item_name)
+        return match ? { ...d, saved_id: match.id } : d
+      }))
+    }
+
+    setSaving(false)
+    // Don't auto-navigate — let user add photos first
+    // They can tap Back or navigate away when done
   }
 
   const allPeople = [
@@ -441,6 +457,16 @@ export function AddMealPage({ prefillRestaurant, onSaved }: Props) {
                 <textarea className="inp" placeholder="Anything to remember next time…"
                   value={draft.notes} onChange={e => updateDraft(i, { notes: e.target.value })} />
               </div>
+              {draft.saved_id && (
+                <div className="form-group" style={{ marginTop: 6 }}>
+                  <div className="form-label">Photo (optional)</div>
+                  <PhotoUpload
+                    entryId={draft.saved_id}
+                    existingUrl={draft.photo_url}
+                    onUploaded={url => updateDraft(i, { photo_url: url })}
+                  />
+                </div>
+              )}
             </div>
           ))}
 
@@ -452,9 +478,20 @@ export function AddMealPage({ prefillRestaurant, onSaved }: Props) {
 
           {saveError && <div className="auth-error">{saveError}</div>}
 
-          <button className="action-btn" onClick={save} disabled={saving}>
-            {saving ? 'Saving…' : '✓ Save to Diary'}
-          </button>
+          {drafts.some(d => d.saved_id) ? (
+            <div style={{ marginTop: 14 }}>
+              <div style={{ background: '#e8f5e8', color: '#0e3d0e', padding: '10px 14px', borderRadius: 8, fontSize: 13, fontWeight: 700, marginBottom: 10, textAlign: 'center' }}>
+                ✓ Saved! Add photos above or tap Done.
+              </div>
+              <button className="action-btn" onClick={onSaved}>
+                Done →
+              </button>
+            </div>
+          ) : (
+            <button className="action-btn" onClick={save} disabled={saving}>
+              {saving ? 'Saving…' : '✓ Save to Diary'}
+            </button>
+          )}
         </>
       )}
     </div>
