@@ -353,3 +353,14 @@ button, .btn, .nav-tab, .chip, .menu-item, .ctab {
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 }
+ 
+ rating row */
+.star-row { display: inline-flex; gap: 2px; position: relative; }
+.star-wrap { position: relative; display: inline-block; font-size: 22px; cursor: pointer; color: #ccc; user-select: none; line-height: 1; }
+.star-wrap .left-half, .star-wrap .right-half {
+  position: absolute; top: 0; height: 100%; width: 50%; cursor: pointer;
+}
+.star-wrap .left-half { left: 0; }
+.star-wrap .right-half { right: 0; }
+.star-wrap.full { color: #9a6c00; }
+.star-wrap.half { background: linear-gradient(to right, #9a6c00 50%, #ccc 50%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }

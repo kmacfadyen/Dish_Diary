@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react'
 import { useEntries } from '@/hooks/useEntries'
 import { useAuth } from '@/hooks/useAuth'
-import { starsDisplay, avgRating } from '@/lib/helpers'
+import { avgRating } from '@/lib/helpers'
+import { StarDisplay, StarRating } from '@/components/StarRating'
 import { format } from 'date-fns'
 import type { DiaryEntry, Restaurant, DishStats } from '@/types'
 
@@ -66,6 +67,33 @@ export function LogPage({ onLogAgain }: Props) {
   const modalRestaurant = modalRId ? restaurants.find(r => r.id === modalRId) : null
   const modalEntries = modalRId ? entries.filter(e => e.restaurant_id === modalRId) : []
 
+  // Top 4 restaurants by average rating
+  const topRestaurants = useMemo(() => {
+    return restaurants
+      .map(r => {
+        const es = entries.filter(e => e.restaurant_id === r.id)
+        const ar = avgRating(es.map(e => e.rating_overall))
+        const visits = new Set(es.map(e => e.visit_date)).size
+        const topDish = (() => {
+          const byDish = new Map<string, number[]>()
+          es.forEach(e => {
+            if (!byDish.has(e.item_name)) byDish.set(e.item_name, [])
+            if (e.rating_overall) byDish.get(e.item_name)!.push(e.rating_overall)
+          })
+          let best = { name: '', avg: 0 }
+          byDish.forEach((ratings, name) => {
+            const a = avgRating(ratings)
+            if (a > best.avg) best = { name, avg: a }
+          })
+          return best.name || null
+        })()
+        return { restaurant: r, avgRating: ar, visits, topDish, entryCount: es.length }
+      })
+      .filter(r => r.entryCount > 0)
+      .sort((a, b) => b.avgRating - a.avgRating)
+      .slice(0, 4)
+  }, [restaurants, entries])
+
   if (loading) return <div className="screen"><div className="empty"><div className="empty-icon">⏳</div><div className="empty-sub">Loading your diary…</div></div></div>
 
   return (
@@ -75,6 +103,29 @@ export function LogPage({ onLogAgain }: Props) {
         <input className="inp" style={{ width: 200, padding: '7px 10px' }} placeholder="Search restaurant or dish…"
           value={search} onChange={e => setSearch(e.target.value)} />
       </div>
+
+      {/* Top rated showcase */}
+      {topRestaurants.length > 0 && (
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+            <div className="section-label" style={{ margin: 0 }}>⭐ Your top rated</div>
+            <div style={{ fontSize: 11, color: 'var(--fg3)', fontWeight: 600 }}>all-time averages</div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+            {topRestaurants.map(({ restaurant, avgRating: ar, visits, topDish }) => (
+              <div key={restaurant.id}
+                style={{ background: '#fff', borderRadius: 'var(--r)', border: '1px solid var(--border)', padding: '12px 14px', cursor: 'pointer', position: 'relative', overflow: 'hidden' }}
+                onClick={() => openRestaurantModal(restaurant.id)}>
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `hsl(${Math.round(ar * 24)}, 60%, 35%)` }} />
+                <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--fg)', marginBottom: 4, lineHeight: 1.2 }}>{restaurant.name}</div>
+                <StarDisplay value={ar} size={14} />
+                <div style={{ fontSize: 11, color: 'var(--fg3)', marginTop: 4, fontWeight: 600 }}>{ar.toFixed(1)} avg · {visits} visit{visits !== 1 ? 's' : ''}</div>
+                {topDish && <div style={{ fontSize: 11, color: 'var(--accent)', marginTop: 4, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>✦ {topDish}</div>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {grouped.length === 0 && (
         <div className="empty">
@@ -112,7 +163,7 @@ export function LogPage({ onLogAgain }: Props) {
                     {d.name}
                     {d.count > 1 && <span className="repeat-badge">↺ {d.count}x</span>}
                   </div>
-                  <div className="star-disp">{starsDisplay(d.avgRat)}</div>
+                  <div className="star-disp"><StarDisplay value={d.avgRat} /></div>
                 </div>
                 <div style={{ fontSize: 11, color: 'var(--fg3)', marginTop: 3 }}>
                   {d.count > 1
@@ -170,7 +221,7 @@ export function LogPage({ onLogAgain }: Props) {
                       <span className="dish-history-name">{stat.item_name}</span>
                       {stat.visit_count > 1 && <span className="repeat-badge">↺ {stat.visit_count}x</span>}
                     </div>
-                    <div className="star-disp">{starsDisplay(stat.avg_rating)}</div>
+                    <div className="star-disp"><StarDisplay value={stat.avg_rating} /></div>
                   </div>
                   {stat.visit_count > 1 && (
                     <div style={{ fontSize: 11, color: 'var(--fg3)', marginBottom: 6, fontWeight: 600 }}>

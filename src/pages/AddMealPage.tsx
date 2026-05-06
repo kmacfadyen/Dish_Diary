@@ -3,7 +3,8 @@ import { useEntries } from '@/hooks/useEntries'
 import { useAuth } from '@/hooks/useAuth'
 import { useFriends } from '@/hooks/useFriends'
 import { useSession } from '@/hooks/useSession'
-import { CUISINES, initials, starsDisplay } from '@/lib/helpers'
+import { CUISINES, initials } from '@/lib/helpers'
+import { StarRating } from '@/components/StarRating'
 import { searchGooglePlaces } from '@/lib/places'
 import type { Restaurant, NewEntryDraft } from '@/types'
 
@@ -98,6 +99,30 @@ export function AddMealPage({ prefillRestaurant, onSaved }: Props) {
     loadPreviousItemsByName(manualName, manualAddress)
     setManualMode(false)
     setStep(2)
+  }
+
+  async function deleteItemPermanently(name: string) {
+    // Remove from UI
+    setPreviousItems(prev => prev.filter(n => n !== name))
+    setSelectedItems(prev => prev.filter(i => i.name !== name))
+    // Also delete from database so it won't show up next time
+    if (user && selectedRestaurant) {
+      const { supabase } = await import('@/lib/supabase')
+      // Find the restaurant id
+      const { data: rests } = await supabase
+        .from('restaurants')
+        .select('id')
+        .ilike('name', selectedRestaurant.name)
+        .limit(1)
+      if (rests && rests[0]) {
+        await supabase
+          .from('diary_entries')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('restaurant_id', rests[0].id)
+          .ilike('item_name', name)
+      }
+    }
   }
 
   function toggleItem(name: string) {
@@ -286,14 +311,24 @@ export function AddMealPage({ prefillRestaurant, onSaved }: Props) {
           {/* Previously logged items */}
           {previousItems.length > 0 && (
             <>
-              <div className="section-label">Previously logged here</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <div className="section-label" style={{ margin: 0 }}>Previously logged here</div>
+                <span style={{ fontSize: 11, color: 'var(--fg3)', fontWeight: 600 }}>tap ✕ to delete an item</span>
+              </div>
               <div className="menu-grid" style={{ marginBottom: 16 }}>
                 {previousItems.map(name => (
-                  <div key={name}
-                    className={`menu-item${selectedItems.some(s => s.name === name) ? ' on' : ''}`}
-                    onClick={() => toggleItem(name)}>
-                    <div className="menu-item-name">{name}</div>
-                    <div className="menu-item-cat">Previously ordered</div>
+                  <div key={name} style={{ position: 'relative' }}>
+                    <div
+                      className={`menu-item${selectedItems.some(s => s.name === name) ? ' on' : ''}`}
+                      onClick={() => toggleItem(name)}
+                      style={{ paddingRight: 28 }}>
+                      <div className="menu-item-name">{name}</div>
+                      <div className="menu-item-cat">Previously ordered</div>
+                    </div>
+                    <span
+                      onClick={e => { e.stopPropagation(); deleteItemPermanently(name) }}
+                      style={{ position: 'absolute', top: 6, right: 8, cursor: 'pointer', fontSize: 13, color: 'var(--fg3)', fontWeight: 800, lineHeight: 1, zIndex: 2 }}
+                      title="Delete this item">✕</span>
                   </div>
                 ))}
               </div>
@@ -301,7 +336,7 @@ export function AddMealPage({ prefillRestaurant, onSaved }: Props) {
           )}
 
           {/* Add new item */}
-          <div className="section-label">{previousItems.length > 0 ? 'Add a new item' : 'What did you have?'}</div>
+          <div className="section-label">Add a dish</div>
           <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
             <input className="inp" style={{ flex: 1 }}
               placeholder="Type a dish name (e.g. Truffle Pasta, House Burger…)"
@@ -372,13 +407,8 @@ export function AddMealPage({ prefillRestaurant, onSaved }: Props) {
 
               {draft.mode === 'stars' && (
                 <div className="form-group">
-                  <div className="form-label">Overall rating</div>
-                  <div style={{ display: 'flex', gap: 4 }}>
-                    {[1, 2, 3, 4, 5].map(n => (
-                      <span key={n} className={`star${n <= draft.rating_overall ? ' on' : ''}`}
-                        onClick={() => updateDraft(i, { rating_overall: n })}>★</span>
-                    ))}
-                  </div>
+                  <div className="form-label">Overall rating &nbsp;<span style={{fontSize:12,color:'var(--fg3)',fontWeight:600}}>({draft.rating_overall} / 5)</span></div>
+                  <StarRating value={draft.rating_overall} onChange={v => updateDraft(i, { rating_overall: v })} size={28} />
                 </div>
               )}
 
