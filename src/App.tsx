@@ -4,7 +4,7 @@ import { AuthPage } from '@/pages/AuthPage'
 import { LogPage } from '@/pages/LogPage'
 import { AddMealPage } from '@/pages/AddMealPage'
 import { WishlistPage } from '@/pages/WishlistPage'
-import { SessionPage } from '@/pages/SessionPage'
+import { FriendsPage } from '@/pages/FriendsPage'
 import { PlacesPage } from '@/pages/PlacesPage'
 import { ProfilePage } from '@/pages/ProfilePage'
 import { Logo } from '@/components/Logo'
@@ -12,7 +12,7 @@ import { SharePage } from '@/pages/SharePage'
 import { useFriends } from '@/hooks/useFriends'
 import type { Restaurant } from '@/types'
 
-type Tab = 'log' | 'add' | 'wishlist' | 'session' | 'places' | 'profile'
+type Tab = 'log' | 'add' | 'wishlist' | 'friends' | 'places' | 'profile'
 
 export function App() {
   const { user, loading } = useAuth()
@@ -80,7 +80,7 @@ export function App() {
           { id: 'log', label: '📖 Log' },
           { id: 'add', label: '+ Meal' },
           { id: 'wishlist', label: '✨ Try List' },
-          { id: 'session', label: '👥 Group' },
+          { id: 'friends', label: '👥 Friends' },
           { id: 'places', label: '🍽️ Places' },
         ] as { id: Tab; label: string }[]).map(t => (
           <button key={t.id} className={`nav-tab${tab === t.id ? ' active' : ''}`} onClick={() => setTab(t.id)}>
@@ -93,7 +93,7 @@ export function App() {
         {tab === 'log' && <LogPage onLogAgain={logAgain} />}
         {tab === 'add' && <AddMealPage prefillRestaurant={prefillRestaurant} onSaved={handleSaved} onEntriesSaved={handleEntriesSaved} savedEntryIds={savedEntryIds} justSaved={justSaved} />}
         {tab === 'wishlist' && <WishlistPage />}
-        {tab === 'session' && <SessionPage />}
+        {tab === 'friends' && <FriendsPage />}
         {tab === 'places' && <PlacesPage onLogAgain={logAgain} />}
         {tab === 'profile' && <ProfilePage />}
       </main>
