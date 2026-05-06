@@ -39,6 +39,7 @@ export function AddMealPage({ prefillRestaurant, onSaved }: Props) {
   const [visitDate, setVisitDate] = useState(new Date().toISOString().split('T')[0])
   const [drafts, setDrafts] = useState<NewEntryDraft[]>([])
   const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
   const [saveError, setSaveError] = useState('')
 
   // Pre-fill from "Log again"
@@ -233,8 +234,7 @@ export function AddMealPage({ prefillRestaurant, onSaved }: Props) {
     }
 
     setSaving(false)
-    // Don't auto-navigate — let user add photos first
-    // They can tap Back or navigate away when done
+    setSaved(true)
   }
 
   const allPeople = [
@@ -478,7 +478,7 @@ export function AddMealPage({ prefillRestaurant, onSaved }: Props) {
 
           {saveError && <div className="auth-error">{saveError}</div>}
 
-          {drafts.some(d => d.saved_id) ? (
+          {saved ? (
             <div style={{ marginTop: 14 }}>
               <div style={{ background: '#e8f5e8', color: '#0e3d0e', padding: '10px 14px', borderRadius: 8, fontSize: 13, fontWeight: 700, marginBottom: 10, textAlign: 'center' }}>
                 ✓ Saved! Add photos above or tap Done.
