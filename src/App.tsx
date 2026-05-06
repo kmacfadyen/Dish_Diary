@@ -18,6 +18,8 @@ export function App() {
   const { user, loading } = useAuth()
   const [tab, setTab] = useState<Tab>('log')
   const [prefillRestaurant, setPrefillRestaurant] = useState<Restaurant | null>(null)
+  const [savedEntryIds, setSavedEntryIds] = useState<{id: string, item_name: string}[]>([])
+  const [justSaved, setJustSaved] = useState(false)
   const { pendingReceived } = useFriends()
 
   // Handle share links — /share/TOKEN — no auth required
@@ -41,7 +43,14 @@ export function App() {
 
   function handleSaved() {
     setPrefillRestaurant(null)
+    setJustSaved(false)
+    setSavedEntryIds([])
     setTab('log')
+  }
+
+  function handleEntriesSaved(ids: {id: string, item_name: string}[]) {
+    setSavedEntryIds(ids)
+    setJustSaved(true)
   }
 
   return (
@@ -82,7 +91,7 @@ export function App() {
 
       <main>
         {tab === 'log' && <LogPage onLogAgain={logAgain} />}
-        {tab === 'add' && <AddMealPage prefillRestaurant={prefillRestaurant} onSaved={handleSaved} />}
+        {tab === 'add' && <AddMealPage prefillRestaurant={prefillRestaurant} onSaved={handleSaved} onEntriesSaved={handleEntriesSaved} savedEntryIds={savedEntryIds} justSaved={justSaved} />}
         {tab === 'wishlist' && <WishlistPage />}
         {tab === 'session' && <SessionPage />}
         {tab === 'places' && <PlacesPage onLogAgain={logAgain} />}

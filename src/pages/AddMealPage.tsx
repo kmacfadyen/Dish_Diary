@@ -12,11 +12,14 @@ import type { Restaurant, NewEntryDraft } from '@/types'
 interface Props {
   prefillRestaurant?: Restaurant | null
   onSaved: () => void
+  onEntriesSaved: (ids: {id: string, item_name: string}[]) => void
+  savedEntryIds: {id: string, item_name: string}[]
+  justSaved: boolean
 }
 
 const ATTRS = ['Flavor', 'Temperature', 'Texture', 'Presentation', 'Value'] as const
 
-export function AddMealPage({ prefillRestaurant, onSaved }: Props) {
+export function AddMealPage({ prefillRestaurant, onSaved, onEntriesSaved, savedEntryIds, justSaved }: Props) {
   const { user, profile } = useAuth()
   const { friends } = useFriends()
   const { activeSession } = useSession()
@@ -39,7 +42,6 @@ export function AddMealPage({ prefillRestaurant, onSaved }: Props) {
   const [visitDate, setVisitDate] = useState(new Date().toISOString().split('T')[0])
   const [drafts, setDrafts] = useState<NewEntryDraft[]>([])
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
   const [saveError, setSaveError] = useState('')
 
   // Pre-fill from "Log again"
@@ -234,7 +236,7 @@ export function AddMealPage({ prefillRestaurant, onSaved }: Props) {
     }
 
     setSaving(false)
-    setSaved(true)
+    if (savedEntries) onEntriesSaved(savedEntries)
   }
 
   const allPeople = [
@@ -457,12 +459,12 @@ export function AddMealPage({ prefillRestaurant, onSaved }: Props) {
                 <textarea className="inp" placeholder="Anything to remember next time…"
                   value={draft.notes} onChange={e => updateDraft(i, { notes: e.target.value })} />
               </div>
-              {draft.saved_id && (
+              {savedEntryIds.find(e => e.item_name === draft.item_name) && (
                 <div className="form-group" style={{ marginTop: 6 }}>
                   <div className="form-label">Photo (optional)</div>
                   <PhotoUpload
-                    entryId={draft.saved_id}
-                    existingUrl={draft.photo_url}
+                    entryId={savedEntryIds.find(e => e.item_name === draft.item_name)!.id}
+                    existingUrl={null}
                     onUploaded={url => updateDraft(i, { photo_url: url })}
                   />
                 </div>
@@ -478,7 +480,7 @@ export function AddMealPage({ prefillRestaurant, onSaved }: Props) {
 
           {saveError && <div className="auth-error">{saveError}</div>}
 
-          {saved ? (
+          {justSaved ? (
             <div style={{ marginTop: 14 }}>
               <div style={{ background: '#e8f5e8', color: '#0e3d0e', padding: '10px 14px', borderRadius: 8, fontSize: 13, fontWeight: 700, marginBottom: 10, textAlign: 'center' }}>
                 ✓ Saved! Add photos above or tap Done.
