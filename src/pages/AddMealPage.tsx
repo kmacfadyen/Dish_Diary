@@ -152,7 +152,7 @@ export function AddMealPage({ prefillRestaurant, onSaved, onEntriesSaved, savedE
     const newDrafts: any[] = selectedItems.map(item => ({
       item_name: item.name,
       item_category: '',
-      who: [user?.id ?? ''],
+      who: [],
       rating_overall: 3,
       rating_flavor: 3,
       rating_temperature: 3,
@@ -192,6 +192,14 @@ export function AddMealPage({ prefillRestaurant, onSaved, onEntriesSaved, savedE
       selectedRestaurant.google_place_id
     )
     if (!restaurant) { setSaveError('Failed to save restaurant.'); setSaving(false); return }
+
+    // Validate — every dish needs at least one person selected
+    const unassigned = drafts.filter(d => d.who.length === 0)
+    if (unassigned.length > 0) {
+      setSaveError(`Please select who had: ${unassigned.map(d => d.item_name).join(', ')}`)
+      setSaving(false)
+      return
+    }
 
     const rows: any[] = []
     drafts.forEach(draft => {
@@ -401,6 +409,7 @@ export function AddMealPage({ prefillRestaurant, onSaved, onEntriesSaved, savedE
               <div className="form-group">
                 <div className="form-label">Who had this?</div>
                 <div>
+                  <div style={{fontSize:11,color:'var(--fg3)',marginBottom:6,fontWeight:600}}>Select everyone who had this dish</div>
                   {allPeople.map(p => (
                     <button key={p.id} className={`chip${draft.who.includes(p.id) ? ' on' : ''}`}
                       onClick={() => toggleWho(i, p.id)}>
