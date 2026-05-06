@@ -126,4 +126,6 @@ export interface NewEntryDraft {
   rating_value: number
   notes: string
   mode: 'stars' | 'detailed'
+  photo_url?: string | null
+  saved_id?: string | null
 }
