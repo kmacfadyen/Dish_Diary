@@ -215,15 +215,12 @@ export function AddMealPage({ prefillRestaurant, onSaved, onEntriesSaved, savedE
       })
     })
 
-    // Only save entries for current user
-    const myRows = rows.filter(r => r.user_id === user.id)
-
-    // Insert and get back IDs so we can attach photos
+    // Insert entries for all selected people (current user + friends)
     const { supabase } = await import('@/lib/supabase')
     const { data: savedEntries, error } = await supabase
       .from('diary_entries')
-      .insert(myRows)
-      .select('id, item_name')
+      .insert(rows)
+      .select('id, item_name, user_id')
 
     if (error) { setSaveError(error.message); setSaving(false); return }
 
@@ -236,7 +233,8 @@ export function AddMealPage({ prefillRestaurant, onSaved, onEntriesSaved, savedE
     }
 
     setSaving(false)
-    if (savedEntries) onEntriesSaved(savedEntries)
+    // Only pass current user's entries to photo upload
+    if (savedEntries) onEntriesSaved(savedEntries.filter((e: any) => e.user_id === user.id))
   }
 
   const allPeople = [
