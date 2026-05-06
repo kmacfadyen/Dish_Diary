@@ -364,3 +364,31 @@ button, .btn, .nav-tab, .chip, .menu-item, .ctab {
 .star-wrap .right-half { right: 0; }
 .star-wrap.full { color: #9a6c00; }
 .star-wrap.half { background: linear-gradient(to right, #9a6c00 50%, #ccc 50%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+/* ── Fix content scrolling behind sticky header/nav ── */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh; /* dynamic viewport height — accounts for mobile browser chrome */
+  overflow: hidden;
+}
+ 
+main {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+ 
+/* Ensure header + nav heights are accounted for */
+.header {
+  flex-shrink: 0;
+  position: relative; /* remove sticky so it stays in flow */
+  top: unset;
+  z-index: 100;
+}
+ 
+.nav {
+  flex-shrink: 0;
+  position: relative;
+  top: unset;
+  z-index: 99;
+}
