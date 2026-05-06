@@ -1,0 +1,24 @@
+{
+  "name": "Ate That",
+  "short_name": "Ate That",
+  "description": "Track every great (and not-so-great) meal",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a3010",
+  "theme_color": "#0a3010",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/ate-that-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/ate-that-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

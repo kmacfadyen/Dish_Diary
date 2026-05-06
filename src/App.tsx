@@ -59,8 +59,8 @@ export function App() {
         <div className="header-logo">
           <Logo size={56} color="#ffffff" />
           <div>
-            <h1>Dish Diary</h1>
-            <div className="header-sub">Track every great (and not-so-great) meal</div>
+            <h1>Ate That</h1>
+            <div className="header-sub">Rate it. Remember it. Ate That.</div>
           </div>
         </div>
         <button

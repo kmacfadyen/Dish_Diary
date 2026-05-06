@@ -34,8 +34,8 @@ export function AuthPage() {
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-logo">
-          <Logo size={52} color="#0e3d0e" />
-          <h1>Dish Diary</h1>
+          <Logo size={52} />
+          <h1>Ate That</h1>
         </div>
 
         <p style={{ textAlign: 'center', color: 'var(--fg3)', fontSize: 13, marginBottom: 24 }}>

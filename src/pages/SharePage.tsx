@@ -56,7 +56,7 @@ export function SharePage({ token }: { token: string }) {
       <div style={{ background: '#0a3010', padding: '20px 20px 24px', color: '#fff' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, opacity: 0.8 }}>
           <Logo size={28} color="#fff" />
-          <span style={{ fontSize: 14, fontWeight: 700 }}>Dish Diary</span>
+          <span style={{ fontSize: 14, fontWeight: 700 }}>Ate That</span>
         </div>
         <div style={{ fontSize: 24, fontWeight: 800, marginBottom: 4 }}>{restaurant.name}</div>
         <div style={{ fontSize: 13, opacity: 0.75, marginBottom: 12 }}>{restaurant.address} {restaurant.cuisine && `· ${restaurant.cuisine}`}</div>
@@ -102,7 +102,7 @@ export function SharePage({ token }: { token: string }) {
 
       {/* Footer */}
       <div style={{ textAlign: 'center', padding: '16px', color: 'var(--fg3)', fontSize: 12 }}>
-        Shared via <strong style={{ color: 'var(--accent)' }}>Dish Diary</strong>
+        Shared via <strong style={{ color: 'var(--accent)' }}>Ate That</strong>
       </div>
     </div>
   )
